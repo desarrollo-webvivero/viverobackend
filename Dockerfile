@@ -1,12 +1,13 @@
-FROM eclipse-temurin:21-jre-alpine
+# Etapa 1: Compilación del código fuente con Java 21 y Maven
+FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Copia el ejecutable compilado
-COPY target/demo-0.0.1-SNAPSHOT.jar app.jar
-
-# Copia la carpeta de la Wallet de Oracle
-#COPY Wallet_BdPensamiento /app/Wallet_BdPensamiento
-
+# Etapa 2: Ejecución de la aplicación Spring Boot
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-
 ENTRYPOINT ["java", "-jar", "app.jar"]
