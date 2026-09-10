@@ -18,7 +18,7 @@ public class ClienteController {
     private ClienteRepository clienteRepository;
     @PostMapping ("/registro")
     public ResponseEntity<?> registrarCliente(@RequestBody Cliente cliente) {
-        if (clienteRepository.existsByCorreoElctronico(cliente.getCorreoElectronico())) {
+        if (clienteRepository.existsByCorreoElectronico(cliente.getCorreoElectronico())) {
             Map<String, String> error = new HashMap<>();
             error.put("error", "El correo electrónico ya está registrado");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
