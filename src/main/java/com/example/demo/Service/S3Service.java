@@ -1,4 +1,4 @@
-package com.example.demo.Service; // Debe tener tu paquete base 'com.example.demo'
+package com.example.demo.service; // Debe tener tu paquete base 'com.example.demo'
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
