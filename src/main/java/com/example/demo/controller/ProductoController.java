@@ -22,7 +22,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/productos")
-@CrossOrigin(origins = "*") // Habilita peticiones desde AWS Amplify
+@CrossOrigin(origins = "*")
 public class ProductoController {
 
     @Autowired
@@ -34,7 +34,6 @@ public class ProductoController {
     @Autowired
     private S3Service s3Service;
 
-    // Endpoint directo para subir imagen independiente
     @PostMapping("/upload")
     public ResponseEntity<?> subirImagen(@RequestParam("file") MultipartFile file) {
         try {
@@ -54,9 +53,8 @@ public class ProductoController {
         return productoRepository.findAll();
     }
 
-    // Endpoint principal ajustado para recibir FormData e imagen (Soluciona Error 415)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Transactional // Garantiza el COMMIT automático en la base de datos Oracle
+    @Transactional
     public ResponseEntity<?> crearProducto(
             @RequestParam("nombre") String nombre,
             @RequestParam("precioBase") BigDecimal precioBase,
@@ -71,24 +69,24 @@ public class ProductoController {
             producto.setDescripcion(descripcion);
             producto.setStockDisponible(stockDisponible);
 
-            // 1. Vincular categoría desde Oracle
-            if (categoriaId != null) {
-                Categoria categoriaCompleta = categoriaRepository.findById(categoriaId)
-                        .orElseThrow(() -> new RuntimeException("Categoría no encontrada con ID: " + categoriaId));
-                producto.setCategoria(categoriaCompleta);
-            }
+            // 1. Buscar la categoría requerida por la restricción NOT NULL de Oracle
+            Categoria categoria = categoriaRepository.findById(categoriaId)
+                    .orElseThrow(() -> new RuntimeException("La categoría con ID " + categoriaId + " no existe en la base de datos."));
+            producto.setCategoria(categoria);
 
-            // 2. Subir imagen a AWS S3 si el usuario seleccionó un archivo
+            // 2. Subir imagen a S3 si se seleccionó archivo
             if (imagen != null && !imagen.isEmpty()) {
                 String imageUrl = s3Service.uploadFile(imagen);
-                producto.setImagenUrl(imageUrl); // Guarda la URL retornada por S3
+                producto.setImagenUrl(imageUrl);
             }
 
-            // 3. Guardar en Oracle Database
+            // 3. Persistir en Oracle
             Producto productoGuardado = productoRepository.save(producto);
             return ResponseEntity.status(HttpStatus.CREATED).body(productoGuardado);
 
         } catch (Exception e) {
+            System.err.println("=== ERROR AL CREAR PRODUCTO ===");
+            e.printStackTrace(); // Garantiza que el error salga impreso en Render
             Map<String, String> error = new HashMap<>();
             error.put("mensaje", "Error al guardar el producto: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
