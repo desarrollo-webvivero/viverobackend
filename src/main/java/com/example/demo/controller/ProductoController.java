@@ -5,11 +5,13 @@ import com.example.demo.model.Categoria;
 import com.example.demo.model.Producto;
 import com.example.demo.repository.CategoriaRepository;
 import com.example.demo.repository.ProductoRepository;
+import com.example.demo.service.S3Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +28,24 @@ public class ProductoController {
 
     @Autowired
     private CategoriaRepository categoriaRepository;
+
+    @Autowired
+    private S3Service s3Service;
+
+    // Nuevo endpoint para subir la imagen a S3
+    @PostMapping("/upload")
+    public ResponseEntity<?> subirImagen(@RequestParam("file") MultipartFile file) {
+        try {
+            String imageUrl = s3Service.uploadFile(file);
+            Map<String, String> response = new HashMap<>();
+            response.put("url", imageUrl);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", "Error al subir la imagen a S3: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
 
     @GetMapping
     public List<Producto> obtenerTodos() {
