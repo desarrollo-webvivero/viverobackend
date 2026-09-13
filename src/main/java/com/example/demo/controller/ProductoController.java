@@ -8,11 +8,13 @@ import com.example.demo.repository.ProductoRepository;
 import com.example.demo.service.S3Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +34,7 @@ public class ProductoController {
     @Autowired
     private S3Service s3Service;
 
-    // Nuevo endpoint para subir la imagen a S3
+    // Endpoint directo para subir imagen independiente
     @PostMapping("/upload")
     public ResponseEntity<?> subirImagen(@RequestParam("file") MultipartFile file) {
         try {
@@ -52,18 +54,40 @@ public class ProductoController {
         return productoRepository.findAll();
     }
 
-    @PostMapping
+    // Endpoint principal ajustado para recibir FormData e imagen (Soluciona Error 415)
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional // Garantiza el COMMIT automático en la base de datos Oracle
-    public ResponseEntity<?> crearProducto(@RequestBody Producto producto) {
+    public ResponseEntity<?> crearProducto(
+            @RequestParam("nombre") String nombre,
+            @RequestParam("precioBase") BigDecimal precioBase,
+            @RequestParam("descripcion") String descripcion,
+            @RequestParam("stockDisponible") Integer stockDisponible,
+            @RequestParam("categoria.id") Long categoriaId,
+            @RequestPart(value = "imagen", required = false) MultipartFile imagen) {
         try {
-            if (producto.getCategoria() != null && producto.getCategoria().getId() != null) {
-                Categoria categoriaCompleta = categoriaRepository.findById(producto.getCategoria().getId())
-                        .orElseThrow(() -> new RuntimeException("Categoría no encontrada con ID: " + producto.getCategoria().getId()));
+            Producto producto = new Producto();
+            producto.setNombre(nombre);
+            producto.setPrecioBase(precioBase);
+            producto.setDescripcion(descripcion);
+            producto.setStockDisponible(stockDisponible);
+
+            // 1. Vincular categoría desde Oracle
+            if (categoriaId != null) {
+                Categoria categoriaCompleta = categoriaRepository.findById(categoriaId)
+                        .orElseThrow(() -> new RuntimeException("Categoría no encontrada con ID: " + categoriaId));
                 producto.setCategoria(categoriaCompleta);
             }
 
+            // 2. Subir imagen a AWS S3 si el usuario seleccionó un archivo
+            if (imagen != null && !imagen.isEmpty()) {
+                String imageUrl = s3Service.uploadFile(imagen);
+                producto.setImagenUrl(imageUrl); // Guarda la URL retornada por S3
+            }
+
+            // 3. Guardar en Oracle Database
             Producto productoGuardado = productoRepository.save(producto);
             return ResponseEntity.status(HttpStatus.CREATED).body(productoGuardado);
+
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("mensaje", "Error al guardar el producto: " + e.getMessage());
