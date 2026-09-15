@@ -1,6 +1,7 @@
 package com.example.demo.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "CLIENTES")
@@ -24,13 +25,17 @@ public class Cliente {
     private String contrasenaHash;
 
     @Column (name = "CUENTA_VERIFICADA", nullable = false)
-    private Integer cuentaVerificada = 0;
+    private Integer cuentaVerificada = 0; // 0 = No verificada, 1 = Verificada
 
     @Column (name = "TOKEN_VERIFICACION", length = 100)
-    private String tokenVerificacion;
+    private String tokenVerificacion; // Aquí guardaremos el PIN de 6 dígitos
+
+    @Column (name = "FECHA_EXPIRACION_TOKEN")
+    private LocalDateTime fechaExpiracionToken;
 
     public Cliente() {}
 
+    // Getters y Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -52,4 +57,6 @@ public class Cliente {
     public String getTokenVerificacion() { return tokenVerificacion; }
     public void setTokenVerificacion(String tokenVerificacion) { this.tokenVerificacion = tokenVerificacion; }
 
+    public LocalDateTime getFechaExpiracionToken() { return fechaExpiracionToken; }
+    public void setFechaExpiracionToken(LocalDateTime fechaExpiracionToken) { this.fechaExpiracionToken = fechaExpiracionToken; }
 }
