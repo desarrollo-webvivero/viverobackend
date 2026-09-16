@@ -62,10 +62,10 @@ public class ProductoController {
             @RequestParam(value = "stockDisponible", required = false) Integer stockDisponible,
             @RequestParam(value = "categoriaId", required = false) Long categoriaId,
             @RequestParam(value = "categoria.id", required = false) Long categoriaIdPunto,
+            @RequestParam(value = "categoria", required = false) String categoriaString,
             @RequestPart(value = "imagen", required = false) MultipartFile imagen) {
         
         try {
-            // Logs de diagnóstico para monitorear los valores desde Render
             System.out.println("=== DATOS RECIBIDOS EN CREAR PRODUCTO ===");
             System.out.println("nombre: " + nombre);
             System.out.println("precioBase: " + precioBase);
@@ -73,42 +73,63 @@ public class ProductoController {
             System.out.println("stockDisponible: " + stockDisponible);
             System.out.println("categoriaId: " + categoriaId);
             System.out.println("categoria.id: " + categoriaIdPunto);
+            System.out.println("categoria (String): " + categoriaString);
 
-            // Determinar la categoría (acepta tanto 'categoriaId' como 'categoria.id')
-            Long idCatFinal = (categoriaId != null) ? categoriaId : categoriaIdPunto;
-
-            // Validación manual para devolver mensajes claros en lugar de 400 opaco
+            // Validaciones básicas
             if (nombre == null || nombre.trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("mensaje", "El campo 'nombre' es obligatorio."));
             }
             if (precioBase == null) {
-                return ResponseEntity.badRequest().body(Map.of("mensaje", "El campo 'precioBase' es obligatorio o está mal formateado."));
+                return ResponseEntity.badRequest().body(Map.of("mensaje", "El campo 'precioBase' es obligatorio."));
             }
             if (stockDisponible == null) {
                 return ResponseEntity.badRequest().body(Map.of("mensaje", "El campo 'stockDisponible' es obligatorio."));
             }
-            if (idCatFinal == null) {
-                return ResponseEntity.badRequest().body(Map.of("mensaje", "Se requiere 'categoriaId' o 'categoria.id'."));
+
+            // 1. Resolver el ID de la Categoría buscando en todas las posibles variables
+            Long idCatFinal = null;
+
+            if (categoriaId != null) {
+                idCatFinal = categoriaId;
+            } else if (categoriaIdPunto != null) {
+                idCatFinal = categoriaIdPunto;
+            } else if (categoriaString != null && !categoriaString.trim().isEmpty()) {
+                try {
+                    idCatFinal = Long.parseLong(categoriaString);
+                } catch (NumberFormatException e) {
+                    System.out.println("No se pudo parsear categoriaString a Long: " + categoriaString);
+                }
             }
 
+            // Si aún es null, obtenemos la primera categoría disponible en la BD para evitar el error
+            Categoria categoria;
+            if (idCatFinal != null) {
+                categoria = categoriaRepository.findById(idCatFinal)
+                        .orElseGet(() -> categoriaRepository.findAll().stream().findFirst().orElse(null));
+            } else {
+                System.out.println("Categoría no recibida, asignando la primera categoría por defecto de la BD.");
+                categoria = categoriaRepository.findAll().stream().findFirst().orElse(null);
+            }
+
+            if (categoria == null) {
+                return ResponseEntity.badRequest().body(Map.of("mensaje", "No hay categorías registradas en la base de datos."));
+            }
+
+            // Build del objeto producto
             Producto producto = new Producto();
             producto.setNombre(nombre);
             producto.setPrecioBase(precioBase);
             producto.setDescripcion(descripcion);
             producto.setStockDisponible(stockDisponible);
-
-            // 1. Buscar la categoría en Oracle
-            Categoria categoria = categoriaRepository.findById(idCatFinal)
-                    .orElseThrow(() -> new RuntimeException("La categoría con ID " + idCatFinal + " no existe en la base de datos."));
             producto.setCategoria(categoria);
 
-            // 2. Subir imagen a S3 si se seleccionó archivo
+            // 2. Subir imagen a S3 si existe
             if (imagen != null && !imagen.isEmpty()) {
                 String imageUrl = s3Service.uploadFile(imagen);
                 producto.setImagenUrl(imageUrl);
             }
 
-            // 3. Persistir en la BD
+            // 3. Guardar en Oracle
             Producto productoGuardado = productoRepository.save(producto);
             return ResponseEntity.status(HttpStatus.CREATED).body(productoGuardado);
 
