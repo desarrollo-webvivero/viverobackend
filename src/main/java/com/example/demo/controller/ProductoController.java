@@ -56,22 +56,50 @@ public class ProductoController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     public ResponseEntity<?> crearProducto(
-            @RequestParam("nombre") String nombre,
-            @RequestParam("precioBase") BigDecimal precioBase,
-            @RequestParam("descripcion") String descripcion,
-            @RequestParam("stockDisponible") Integer stockDisponible,
-            @RequestParam("categoria.id") Long categoriaId,
+            @RequestParam(value = "nombre", required = false) String nombre,
+            @RequestParam(value = "precioBase", required = false) BigDecimal precioBase,
+            @RequestParam(value = "descripcion", required = false) String descripcion,
+            @RequestParam(value = "stockDisponible", required = false) Integer stockDisponible,
+            @RequestParam(value = "categoriaId", required = false) Long categoriaId,
+            @RequestParam(value = "categoria.id", required = false) Long categoriaIdPunto,
             @RequestPart(value = "imagen", required = false) MultipartFile imagen) {
+        
         try {
+            // Logs de diagnóstico para monitorear los valores desde Render
+            System.out.println("=== DATOS RECIBIDOS EN CREAR PRODUCTO ===");
+            System.out.println("nombre: " + nombre);
+            System.out.println("precioBase: " + precioBase);
+            System.out.println("descripcion: " + descripcion);
+            System.out.println("stockDisponible: " + stockDisponible);
+            System.out.println("categoriaId: " + categoriaId);
+            System.out.println("categoria.id: " + categoriaIdPunto);
+
+            // Determinar la categoría (acepta tanto 'categoriaId' como 'categoria.id')
+            Long idCatFinal = (categoriaId != null) ? categoriaId : categoriaIdPunto;
+
+            // Validación manual para devolver mensajes claros en lugar de 400 opaco
+            if (nombre == null || nombre.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("mensaje", "El campo 'nombre' es obligatorio."));
+            }
+            if (precioBase == null) {
+                return ResponseEntity.badRequest().body(Map.of("mensaje", "El campo 'precioBase' es obligatorio o está mal formateado."));
+            }
+            if (stockDisponible == null) {
+                return ResponseEntity.badRequest().body(Map.of("mensaje", "El campo 'stockDisponible' es obligatorio."));
+            }
+            if (idCatFinal == null) {
+                return ResponseEntity.badRequest().body(Map.of("mensaje", "Se requiere 'categoriaId' o 'categoria.id'."));
+            }
+
             Producto producto = new Producto();
             producto.setNombre(nombre);
             producto.setPrecioBase(precioBase);
             producto.setDescripcion(descripcion);
             producto.setStockDisponible(stockDisponible);
 
-            // 1. Buscar la categoría requerida por la restricción NOT NULL de Oracle
-            Categoria categoria = categoriaRepository.findById(categoriaId)
-                    .orElseThrow(() -> new RuntimeException("La categoría con ID " + categoriaId + " no existe en la base de datos."));
+            // 1. Buscar la categoría en Oracle
+            Categoria categoria = categoriaRepository.findById(idCatFinal)
+                    .orElseThrow(() -> new RuntimeException("La categoría con ID " + idCatFinal + " no existe en la base de datos."));
             producto.setCategoria(categoria);
 
             // 2. Subir imagen a S3 si se seleccionó archivo
@@ -80,13 +108,13 @@ public class ProductoController {
                 producto.setImagenUrl(imageUrl);
             }
 
-            // 3. Persistir en Oracle
+            // 3. Persistir en la BD
             Producto productoGuardado = productoRepository.save(producto);
             return ResponseEntity.status(HttpStatus.CREATED).body(productoGuardado);
 
         } catch (Exception e) {
             System.err.println("=== ERROR AL CREAR PRODUCTO ===");
-            e.printStackTrace(); // Garantiza que el error salga impreso en Render
+            e.printStackTrace();
             Map<String, String> error = new HashMap<>();
             error.put("mensaje", "Error al guardar el producto: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
