@@ -144,7 +144,7 @@ public class ProductoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
-    @DeleteMapping("/producto/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminarProducto(@PathVariable Long id) {
         Optional<Producto> productoOpt = productoRepository.findById(id);
 
