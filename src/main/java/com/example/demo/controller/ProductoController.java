@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.VerificarStockRequest;
 import com.example.demo.dto.EliminarProductoRequest;
+import com.example.demo.dto.ActualizarProductoRequest;
 import com.example.demo.model.Categoria;
 import com.example.demo.model.Producto;
 import com.example.demo.repository.CategoriaRepository;
@@ -160,8 +161,67 @@ public class ProductoController {
         return ResponseEntity.ok(response);
     }
 
-   
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Transactional
+      public ResponseEntity<?> actualizarProducto(
+        @PathVariable Long id,
+        @RequestParam(value = "nombre", required = false) String nombre,
+        @RequestParam(value = "precioBase", required = false) BigDecimal precioBase,
+        @RequestParam(value = "descripcion", required = false) String descripcion,
+        @RequestParam(value = "stockDisponible", required = false) Integer stockDisponible,
+        @RequestParam(value = "categoriaId", required = false) Long categoriaId,
+        @RequestParam(value = "categoria.id", required = false) Long categoriaIdPunto,
+        @RequestParam(value = "categoria", required = false) String categoriaString,
+        @RequestPart(value = "imagen", required = false) MultipartFile imagen) {
 
+     try {
+        Optional<Producto> productoOpt = productoRepository.findById(id);
+        if (productoOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("mensaje", "Producto no encontrado con el ID: " + id));
+        }
+
+        Producto producto = productoOpt.get();
+
+        // Actualizar campos de texto
+        if (nombre != null && !nombre.trim().isEmpty()) producto.setNombre(nombre);
+        if (precioBase != null) producto.setPrecioBase(precioBase);
+        if (descripcion != null) producto.setDescripcion(descripcion);
+        if (stockDisponible != null) producto.setStockDisponible(stockDisponible);
+
+        // Resolver actualización de la categoría
+        Long idCatFinal = null;
+        if (categoriaId != null) idCatFinal = categoriaId;
+        else if (categoriaIdPunto != null) idCatFinal = categoriaIdPunto;
+        else if (categoriaString != null && !categoriaString.trim().isEmpty()) {
+            try {
+                idCatFinal = Long.parseLong(categoriaString);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        if (idCatFinal != null) {
+            Optional<Categoria> catOpt = categoriaRepository.findById(idCatFinal);
+            catOpt.ifPresent(producto::setCategoria);
+        }
+
+        // Si se envió una nueva imagen, subirla a S3 y actualizar la URL
+        if (imagen != null && !imagen.isEmpty()) {
+            String imageUrl = s3Service.uploadFile(imagen);
+            producto.setImagenUrl(imageUrl);
+        }
+
+        Producto productoActualizado = productoRepository.save(producto);
+        return ResponseEntity.ok(productoActualizado);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("mensaje", "Error al actualizar el producto: " + e.getMessage()));
+    }
+}
+
+
+     
     @PostMapping("/verificar-stock")
     public ResponseEntity<?> verificarStock(@RequestBody VerificarStockRequest request) {
         Optional<Producto> productoOpt = productoRepository.findById(request.getProductoId());
