@@ -144,10 +144,9 @@ public class ProductoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
-
-    @PostMapping ("/eliminar-producto")
-    public ResponseEntity<?> eliminarProducto(@RequestBody EliminarProductoRequest request) {
-        Optional<Producto> productoOpt = productoRepository.findById(request.getProductoId());
+    @DeleteMapping("/producto/{id}")
+    public ResponseEntity<?> eliminarProducto(@PathVariable Long id) {
+        Optional<Producto> productoOpt = productoRepository.findById(id);
 
         if (productoOpt.isEmpty()) {
             Map<String, String> error = new HashMap<>();
@@ -155,13 +154,13 @@ public class ProductoController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
 
-        productoRepository.delete(productoOpt.get());
+        productoRepository.deleteById(id);
         Map<String, String> response = new HashMap<>();
         response.put("mensaje", "Producto eliminado correctamente.");
         return ResponseEntity.ok(response);
     }
 
-
+   
 
     @PostMapping("/verificar-stock")
     public ResponseEntity<?> verificarStock(@RequestBody VerificarStockRequest request) {
