@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.VerificarStockRequest;
+import com.example.demo.dto.EliminarProductoRequest;
 import com.example.demo.model.Categoria;
 import com.example.demo.model.Producto;
 import com.example.demo.repository.CategoriaRepository;
@@ -133,6 +134,8 @@ public class ProductoController {
             Producto productoGuardado = productoRepository.save(producto);
             return ResponseEntity.status(HttpStatus.CREATED).body(productoGuardado);
 
+
+
         } catch (Exception e) {
             System.err.println("=== ERROR AL CREAR PRODUCTO ===");
             e.printStackTrace();
@@ -141,6 +144,24 @@ public class ProductoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
+
+    @PostMapping ("/eliminar-producto")
+    public ResponseEntity<?> eliminarProducto(@RequestBody EliminarProductoRequest request) {
+        Optional<Producto> productoOpt = productoRepository.findById(request.getProductoId());
+
+        if (productoOpt.isEmpty()) {
+            Map<String, String> error = new HashMap<>();
+            error.put("mensaje", "Producto no encontrado.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
+
+        productoRepository.delete(productoOpt.get());
+        Map<String, String> response = new HashMap<>();
+        response.put("mensaje", "Producto eliminado correctamente.");
+        return ResponseEntity.ok(response);
+    }
+
+
 
     @PostMapping("/verificar-stock")
     public ResponseEntity<?> verificarStock(@RequestBody VerificarStockRequest request) {
