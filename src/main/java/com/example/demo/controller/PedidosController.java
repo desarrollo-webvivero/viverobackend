@@ -1,17 +1,15 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.EstadoPedido;
-import com.example.demo.dto.PedidosRequest;
+import com.example.demo.model.EstadoPedido;
 import com.example.demo.service.PedidosService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/pedidos")
-// Permitimos que React (usualmente en puerto 3000 o Vite en 5173) se comunique con Spring Boot
-@CrossOrigin(origins = "*") 
+@CrossOrigin(origins = "*")
 public class PedidosController {
 
     private final PedidosService pedidosService;
@@ -20,21 +18,34 @@ public class PedidosController {
         this.pedidosService = pedidosService;
     }
 
-    // GET: /api/pedidos -> Devuelve la lista completa para poblar tu tabla en React
     @GetMapping
-    public ResponseEntity<List<PedidosRequest>> obtenerPedidos() {
-        List<PedidosRequest> pedidos = pedidosService.obtenerTodosLosPedidos();
-        return ResponseEntity.ok(pedidos);
+    public ResponseEntity<?> obtenerPedidos() {
+        try {
+            var pedidos = pedidosService.obtenerTodosLosPedidos();
+            return ResponseEntity.ok(pedidos);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al obtener los pedidos: " + e.getMessage());
+        }
     }
 
-    // PUT: /api/pedidos/{id}/estado -> Recibe la instrucción de cambio de estado
     @PutMapping("/{id}/estado")
-    public ResponseEntity<String> cambiarEstadoPedido(@PathVariable Long id, @RequestBody EstadoPedido estadoDTO) {
+    public ResponseEntity<?> cambiarEstadoPedido(@PathVariable Long id, @RequestBody Map<String, String> body) {
         try {
-            pedidosService.actualizarEstadoPedido(id, estadoDTO.getEstado());
-            return ResponseEntity.ok("Estado actualizado correctamente a: " + estadoDTO.getEstado());
+            String nuevoEstadoStr = body.get("estado");
+            
+            if (nuevoEstadoStr == null || nuevoEstadoStr.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("El campo 'estado' es requerido.");
+            }
+
+            EstadoPedido nuevoEstado = EstadoPedido.valueOf(nuevoEstadoStr.trim().toUpperCase());
+            
+            var pedidoActualizado = pedidosService.actualizarEstadoPedido(id, nuevoEstado);
+            return ResponseEntity.ok(pedidoActualizado);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Estado no válido. Use: PENDIENTE, ENVIADO, ENTREGADO o CANCELADO.");
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al actualizar estado: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error al actualizar el estado: " + e.getMessage());
         }
     }
 }

@@ -24,7 +24,7 @@ public class Pedidos {
     @Column(name = "Fecha_Solicitud", nullable = false, updatable = false)
     private LocalDateTime fechaSolicitud;
 
-    // CAMBIO AQUI: Mapeo automático del Enum a String en la base de datos
+    // Se mapea directamente con el Enum como String en la BD
     @Enumerated(EnumType.STRING)
     @Column(name = "Estado", nullable = false)
     private EstadoPedido estado;
@@ -49,7 +49,6 @@ public class Pedidos {
     public LocalDateTime getFechaSolicitud() { return fechaSolicitud; }
     public void setFechaSolicitud(LocalDateTime fechaSolicitud) { this.fechaSolicitud = fechaSolicitud; }
 
-    // GETTER Y SETTER ACTUALIZADOS PARA TRABAJAR CON EstadoPedido
     public EstadoPedido getEstado() { return estado; }
     public void setEstado(EstadoPedido estado) { this.estado = estado; }
 
