@@ -3,51 +3,70 @@ package com.example.demo.service;
 import com.example.demo.dto.DashboarResumenRequest;
 import com.example.demo.dto.DashboarResumenRequest.PedidoResumenDTO;
 import com.example.demo.dto.DashboarResumenRequest.PlantaResumenDTO;
+import com.example.demo.model.Producto;
 import com.example.demo.repository.PedidoRepository;
+import com.example.demo.repository.ProductoRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class DashboardService {
 
-    // Declaramos los repositorios
     private final PedidoRepository pedidoRepository;
-    // Si en el futuro creas PlantaRepository, desintermínalo aquí:
-    // private final PlantaRepository plantaRepository;
+    private final ProductoRepository productoRepository;
 
-    // Inyección de dependencias por constructor
-    public DashboardService(PedidoRepository pedidoRepository) {
+    public DashboardService(PedidoRepository pedidoRepository, ProductoRepository productoRepository) {
         this.pedidoRepository = pedidoRepository;
+        this.productoRepository = productoRepository;
     }
 
     public DashboarResumenRequest obtenerResumenCompras() {
         
-        // 1. Va a la BD y cuenta cuántas filas (pedidos) existen
+        // 1. Métricas de ventas
         long totalCompras = pedidoRepository.count(); 
-        
-        // 2. Va a la BD y suma los montos. Si la BD está vacía o da null, se asigna BigDecimal.ZERO
         BigDecimal totalMonto = pedidoRepository.sumarTotalPedidos();
         if (totalMonto == null) {
             totalMonto = BigDecimal.ZERO;
         }
 
-        // 3. Inicializamos listas vacías para las tablas en lugar de usar null
-        List<PlantaResumenDTO> plantasEnPeligro = new ArrayList<>();
+        // 2. Métricas del inventario (usando ProductoRepository)
+        long totalProductosActivos = productoRepository.count();
+        
+        BigDecimal valorInventario = productoRepository.calcularValorTotalInventario();
+        if (valorInventario == null) {
+            valorInventario = BigDecimal.ZERO;
+        }
+
+        long alertasStockBajo = productoRepository.countByStockDisponibleLessThanEqual(5);
+
+        // 3. Productos críticos por agotarse (stock <= 5)
+        List<Producto> productosCriticos = productoRepository.findTop5ByStockDisponibleLessThanEqualOrderByStockDisponibleAsc(5);
+        
+        List<PlantaResumenDTO> plantasEnPeligro = productosCriticos.stream()
+            .map(p -> new PlantaResumenDTO(
+                p.getId(),
+                p.getNombre(),
+                p.getImagenUrl(),
+                p.getStockDisponible()
+            ))
+            .collect(Collectors.toList());
+
+        // 4. Lista para últimos pedidos
         List<PedidoResumenDTO> ultimosPedidos = new ArrayList<>();
 
-        // 4. Retornamos el DTO con los parámetros en el orden exacto definido en DashboarResumenRequest:
-        // (ventasDelMes, ordenesDelMes, valorInventario, totalPlantasActivas, alertasStockBajo, plantasEnPeligro, ultimosPedidos)
+        // 5. Retornar DTO con la información compilada
         return new DashboarResumenRequest(
-            totalMonto,         // ventasDelMes
-            totalCompras,       // ordenesDelMes
-            BigDecimal.ZERO,    // valorInventario
-            0L,                 // totalPlantasActivas
-            0L,                 // alertasStockBajo
-            plantasEnPeligro,   // plantasEnPeligro
-            ultimosPedidos      // ultimosPedidos
+            totalMonto,            // ventasDelMes
+            totalCompras,          // ordenesDelMes
+            valorInventario,       // valorInventario
+            totalProductosActivos, // totalPlantasActivas
+            alertasStockBajo,      // alertasStockBajo
+            plantasEnPeligro,      // productos por agotarse
+            ultimosPedidos         // últimos pedidos
         );
     }
 }
