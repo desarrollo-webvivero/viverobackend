@@ -1,5 +1,6 @@
 package com.example.demo.model;
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "Envios")
@@ -18,8 +19,8 @@ public class Envio {
     @Column(name = "Zona_Referencia", length = 255)
     private String zonaReferencia;
 
-    @Column(name = "Costo_Envio", nullable = false, precision = 10, scale = 2)
-    private Double costoEnvio;
+   @Column(name = "Costo_Envio", nullable = false, precision = 10, scale = 2)
+   private BigDecimal costoEnvio;
 
     // Getters and Setters
 
@@ -55,11 +56,11 @@ public class Envio {
         this.zonaReferencia = zonaReferencia;
     }
 
-    public Double getCostoEnvio() {
+    public BigDecimal getCostoEnvio() {
         return costoEnvio;
     }
 
-    public void setCostoEnvio(Double costoEnvio) {
+    public void setCostoEnvio(BigDecimal costoEnvio) {
         this.costoEnvio = costoEnvio;
     }
     
