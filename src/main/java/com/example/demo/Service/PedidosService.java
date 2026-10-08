@@ -38,7 +38,7 @@ public class PedidosService {
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
 
         // Si en tu entidad Pedidos el atributo 'estado' es String, usa: pedido.setEstado(nuevoEstado.name());
-        pedido.setEstado(nuevoEstado.name());
+        pedido.setEstado(nuevoEstado);
         return pedidosRepository.save(pedido);
     }
 }

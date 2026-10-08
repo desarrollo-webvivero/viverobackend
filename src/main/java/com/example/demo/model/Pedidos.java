@@ -7,29 +7,32 @@ import java.time.LocalDateTime;
 @Entity 
 @Table(name = "Cotizaciones")
 public class Pedidos {
+
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ID_Cotizacion")
     private Long idCotizacion;
 
-    @ManyToOne (fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_Cliente", nullable = false)
     private Cliente cliente;
 
-    @ManyToOne (fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_Envio", nullable = false)
     private Envio envio;
 
     @Column(name = "Fecha_Solicitud", nullable = false, updatable = false)
     private LocalDateTime fechaSolicitud;
 
-    @Column (name = "Estado", nullable = false)
-    private String estado;
+    // CAMBIO AQUI: Mapeo automático del Enum a String en la base de datos
+    @Enumerated(EnumType.STRING)
+    @Column(name = "Estado", nullable = false)
+    private EstadoPedido estado;
 
-    @Column (name = "Total_Estimado", nullable = false)
+    @Column(name = "Total_Estimado", nullable = false)
     private BigDecimal totalEstimado;
 
-    @Column (name = "metodo_pago", nullable = false)
+    @Column(name = "metodo_pago", nullable = false)
     private String metodoPago;
 
     public Pedidos() {}
@@ -46,28 +49,13 @@ public class Pedidos {
     public LocalDateTime getFechaSolicitud() { return fechaSolicitud; }
     public void setFechaSolicitud(LocalDateTime fechaSolicitud) { this.fechaSolicitud = fechaSolicitud; }
 
-    public String getEstado() { return estado; }
-    public void setEstado(String estado) { this.estado = estado; }
+    // GETTER Y SETTER ACTUALIZADOS PARA TRABAJAR CON EstadoPedido
+    public EstadoPedido getEstado() { return estado; }
+    public void setEstado(EstadoPedido estado) { this.estado = estado; }
 
     public BigDecimal getTotalEstimado() { return totalEstimado; }
     public void setTotalEstimado(BigDecimal totalEstimado) { this.totalEstimado = totalEstimado; }
 
     public String getMetodoPago() { return metodoPago; }
     public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
-
-
-    
-
-
-
-    
-
-
-
-    
-
-
-
-
 }
-
