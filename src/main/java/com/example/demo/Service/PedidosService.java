@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.PedidosRequest;
+import com.example.demo.model.EstadoPedido; // Ajusta este import según la ubicación de tu Enum
 import com.example.demo.model.Pedidos;
 import com.example.demo.repository.PedidoRepository;
 import org.springframework.stereotype.Service;
@@ -23,22 +24,21 @@ public class PedidosService {
 
         return pedidos.stream().map(pedido -> new PedidosRequest(
           pedido.getIdCotizacion(),
-          pedido.getCliente().getNombreCompleto(), // Extraemos el String, no el objeto entero
-          pedido.getFechaSolicitud() != null ? pedido.getFechaSolicitud().toString() : "N/A", // Convertimos a String
-          pedido.getTotalEstimado(), // El total va antes que el estado, según tu DTO
-          pedido.getEstado(),
+          pedido.getCliente() != null ? pedido.getCliente().getNombreCompleto() : "Cliente Desconocido",
+          pedido.getFechaSolicitud() != null ? pedido.getFechaSolicitud().toString() : "N/A",
+          pedido.getTotalEstimado(),
+          pedido.getEstado() != null ? pedido.getEstado().toString() : "PENDIENTE",
           pedido.getMetodoPago()
         )).collect(Collectors.toList());
     }
 
-    // Método para que el administrador cambie el estado (Enviado, Entregado, Cancelado)
-    public void actualizarEstadoPedido(Long id, String nuevoEstado) {
+    // Método para que el administrador cambie el estado (Acepta EstadoPedido y retorna Pedidos)
+    public Pedidos actualizarEstadoPedido(Long id, EstadoPedido nuevoEstado) {
         Pedidos pedido = pedidosRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
 
-        // Aquí podrías agregar validaciones extra si lo deseas (ej. no cancelar si ya fue entregado)
-        pedido.setEstado(nuevoEstado);
-
-        pedidosRepository.save(pedido);
+        // Si en tu entidad Pedidos el atributo 'estado' es String, usa: pedido.setEstado(nuevoEstado.name());
+        pedido.setEstado(nuevoEstado.name());
+        return pedidosRepository.save(pedido);
     }
 }
