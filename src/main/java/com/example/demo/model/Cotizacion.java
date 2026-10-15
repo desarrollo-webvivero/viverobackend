@@ -4,38 +4,52 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Entity 
-@Table(name = "Cotizaciones")
-public class Pedidos {
+@Entity
+@Table(name = "COTIZACIONES")
+public class Cotizacion {
 
-    @Id 
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ID_Cotizacion")
+    @Column(name = "ID_COTIZACION")
     private Long idCotizacion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ID_Cliente", nullable = false)
+    @JoinColumn(name = "ID_CLIENTE", nullable = false)
     private Cliente cliente;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ID_Envio", nullable = false)
+    @JoinColumn(name = "ID_ENVIO", nullable = false)
     private Envio envio;
 
-    @Column(name = "Fecha_Solicitud", nullable = false, updatable = false)
+    @Column(name = "FECHA_SOLICITUD", nullable = false)
     private LocalDateTime fechaSolicitud;
 
-    // Se mapea directamente con el Enum como String en la BD
     @Enumerated(EnumType.STRING)
-    @Column(name = "Estado", nullable = false)
+    @Column(name = "ESTADO", nullable = false)
     private EstadoPedido estado;
 
-    @Column(name = "Total_Estimado", nullable = false)
+    @Column(name = "TOTAL_ESTIMADO", nullable = false)
     private BigDecimal totalEstimado;
 
-    @Column(name = "metodo_pago", nullable = false)
+    @Column(name = "METODO_PAGO", nullable = false)
     private String metodoPago;
 
-    public Pedidos() {}
+    @PrePersist
+    protected void prePersist() {
+
+        if (fechaSolicitud == null) {
+            fechaSolicitud = LocalDateTime.now();
+        }
+
+        if (estado == null) {
+            estado = EstadoPedido.PENDIENTE;
+        }
+    }
+
+    // getters y setters...
+
+
+    public Cotizacion() {}
 
     public Long getIdCotizacion() { return idCotizacion; }
     public void setIdCotizacion(Long idCotizacion) { this.idCotizacion = idCotizacion; }

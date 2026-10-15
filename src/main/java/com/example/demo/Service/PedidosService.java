@@ -2,7 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.dto.PedidosRequest;
 import com.example.demo.model.EstadoPedido;
-import com.example.demo.model.Pedidos;
+import com.example.demo.model.Cotizacion;
 import com.example.demo.repository.PedidoRepository;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +19,7 @@ public class PedidosService {
     }
 
     public List<PedidosRequest> obtenerTodosLosPedidos() {
-        List<Pedidos> pedidos = pedidosRepository.findAll();
+        List<Cotizacion> pedidos = pedidosRepository.findAll();
 
         return pedidos.stream().map(pedido -> new PedidosRequest(
             pedido.getIdCotizacion(),
@@ -31,8 +31,8 @@ public class PedidosService {
         )).collect(Collectors.toList());
     }
 
-    public Pedidos actualizarEstadoPedido(Long id, EstadoPedido nuevoEstado) {
-        Pedidos pedido = pedidosRepository.findById(id)
+    public Cotizacion actualizarEstadoPedido(Long id, EstadoPedido nuevoEstado) {
+        Cotizacion pedido = pedidosRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
 
         pedido.setEstado(nuevoEstado);
