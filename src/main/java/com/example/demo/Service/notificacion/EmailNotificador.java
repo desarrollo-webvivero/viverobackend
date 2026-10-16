@@ -1,9 +1,4 @@
-package com.example.demo.service;
-
-public class EmailNotificador {
-    
-}
-package com.example.demo.Service.notificacion;
+package com.example.demo.service.notificacion;
 
 import com.example.demo.model.CanalVerificacion;
 import com.example.demo.model.Cliente;
