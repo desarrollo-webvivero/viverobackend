@@ -199,6 +199,7 @@ public class ClienteController {
         response.put("clienteId", cliente.getId());
         response.put("nombreCompleto", cliente.getNombreCompleto());
         response.put("correoElectronico", cliente.getCorreoElectronico());
+        response.put("telefono", cliente.getTelefono());
         return ResponseEntity.ok(response);
     }
 
