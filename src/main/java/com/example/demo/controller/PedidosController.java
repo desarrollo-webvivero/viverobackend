@@ -28,6 +28,23 @@ public class PedidosController {
         }
     }
 
+
+
+
+
+    //update done by wilson 
+
+    // GET /api/pedidos/cliente/{clienteId} -> pedidos de un cliente (página "Mi cuenta")
+    @GetMapping("/cliente/{clienteId}")
+    public ResponseEntity<?> obtenerPedidosDeCliente(@PathVariable Long clienteId) {
+        try {
+            return ResponseEntity.ok(pedidosService.obtenerPedidosPorCliente(clienteId));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error al obtener los pedidos del cliente: " + e.getMessage());
+        }
+    }
+    //
+
     @PutMapping("/{id}/estado")
     public ResponseEntity<?> cambiarEstadoPedido(@PathVariable Long id, @RequestBody Map<String, String> body) {
         try {
