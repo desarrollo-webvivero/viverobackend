@@ -18,17 +18,30 @@ public class PedidosService {
         this.pedidosRepository = pedidosRepository;
     }
 
+    // Todos los pedidos (para el panel de administración)
     public List<PedidosRequest> obtenerTodosLosPedidos() {
-        List<Cotizacion> pedidos = pedidosRepository.findAll();
+        return pedidosRepository.findAll().stream()
+            .map(this::aDto)
+            .collect(Collectors.toList());
+    }
 
-        return pedidos.stream().map(pedido -> new PedidosRequest(
+    // Solo los pedidos del cliente indicado (para la página "Mi cuenta")
+    public List<PedidosRequest> obtenerPedidosPorCliente(Long clienteId) {
+        return pedidosRepository.findByCliente_IdOrderByFechaSolicitudDesc(clienteId).stream()
+            .map(this::aDto)
+            .collect(Collectors.toList());
+    }
+
+    // Convierte una Cotizacion de la base de datos al formato que recibe el frontend
+    private PedidosRequest aDto(Cotizacion pedido) {
+        return new PedidosRequest(
             pedido.getIdCotizacion(),
             pedido.getCliente() != null ? pedido.getCliente().getNombreCompleto() : "Cliente Desconocido",
             pedido.getFechaSolicitud() != null ? pedido.getFechaSolicitud().toString() : "N/A",
             pedido.getTotalEstimado(),
             pedido.getEstado() != null ? pedido.getEstado().name() : "PENDIENTE",
             pedido.getMetodoPago()
-        )).collect(Collectors.toList());
+        );
     }
 
     public Cotizacion actualizarEstadoPedido(Long id, EstadoPedido nuevoEstado) {
