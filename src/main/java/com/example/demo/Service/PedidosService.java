@@ -86,6 +86,12 @@ public class PedidosService {
             total = total.add(producto.getPrecioBase().multiply(BigDecimal.valueOf(item.getCantidad())));
         }
 
+
+         // El total guardado incluye el costo de envío de la zona elegida
+        if (envio.getCostoEnvio() != null) {
+            total = total.add(envio.getCostoEnvio());
+        }
+        
         Cotizacion pedido = new Cotizacion();
         pedido.setCliente(cliente);
         pedido.setEnvio(envio);
