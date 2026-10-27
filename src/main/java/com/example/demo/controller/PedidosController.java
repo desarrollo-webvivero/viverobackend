@@ -1,7 +1,10 @@
+
 package com.example.demo.controller;
 
+import com.example.demo.dto.CrearCotizacionRequest;
 import com.example.demo.model.EstadoPedido;
 import com.example.demo.service.PedidosService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,11 +31,20 @@ public class PedidosController {
         }
     }
 
-
-
-
-
-    //update done by wilson 
+    // POST /api/pedidos -> crea un pedido nuevo (Pago contra entrega, y más adelante WhatsApp/PayPal)
+    @PostMapping
+    public ResponseEntity<?> crearPedido(@RequestBody CrearCotizacionRequest request) {
+        try {
+            var pedido = pedidosService.crearPedido(request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("mensaje", "Pedido registrado", "pedido", pedido));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                .body(Map.of("mensaje", "No pudimos registrar el pedido. Intenta de nuevo."));
+        }
+    }
 
     // GET /api/pedidos/cliente/{clienteId} -> pedidos de un cliente (página "Mi cuenta")
     @GetMapping("/cliente/{clienteId}")
@@ -43,7 +55,6 @@ public class PedidosController {
             return ResponseEntity.internalServerError().body("Error al obtener los pedidos del cliente: " + e.getMessage());
         }
     }
-    //
 
     @PutMapping("/{id}/estado")
     public ResponseEntity<?> cambiarEstadoPedido(@PathVariable Long id, @RequestBody Map<String, String> body) {
