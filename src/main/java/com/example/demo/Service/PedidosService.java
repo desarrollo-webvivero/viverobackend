@@ -104,12 +104,14 @@ public class PedidosService {
         return aDto(pedidosRepository.save(pedido));
     }
 
-    public Cotizacion actualizarEstadoPedido(Long id, EstadoPedido nuevoEstado) {
+       // update de la funcion
+    @Transactional
+    public PedidosRequest actualizarEstadoPedido(Long id, EstadoPedido nuevoEstado) {
         Cotizacion pedido = pedidosRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
 
         pedido.setEstado(nuevoEstado);
-        return pedidosRepository.save(pedido);
+        return aDto(pedidosRepository.save(pedido));
     }
 
     // Busca la zona de envío: por id, o por departamento + municipio.
