@@ -1,4 +1,3 @@
-
 package com.example.demo.controller;
 
 import com.example.demo.dto.CrearCotizacionRequest;
@@ -31,7 +30,7 @@ public class PedidosController {
         }
     }
 
-    // POST /api/pedidos -> crea un pedido nuevo (Pago contra entrega, y más adelante WhatsApp/PayPal)
+    
     @PostMapping
     public ResponseEntity<?> crearPedido(@RequestBody CrearCotizacionRequest request) {
         try {
@@ -46,13 +45,26 @@ public class PedidosController {
         }
     }
 
-    // GET /api/pedidos/cliente/{clienteId} -> pedidos de un cliente (página "Mi cuenta")
+
     @GetMapping("/cliente/{clienteId}")
     public ResponseEntity<?> obtenerPedidosDeCliente(@PathVariable Long clienteId) {
         try {
             return ResponseEntity.ok(pedidosService.obtenerPedidosPorCliente(clienteId));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error al obtener los pedidos del cliente: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/detalle")
+    public ResponseEntity<?> obtenerDetalle(@PathVariable Long id,
+                                            @RequestParam(required = false) Long clienteId) {
+        try {
+            return ResponseEntity.ok(pedidosService.obtenerDetalle(id, clienteId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                .body(Map.of("mensaje", "No pudimos cargar el detalle del pedido."));
         }
     }
 
@@ -73,7 +85,7 @@ public class PedidosController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body("Estado no válido. Use: PENDIENTE, ENVIADO, ENTREGADO o CANCELADO.");
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al actualizar el estado: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("Error al actualizar el estado: " + e.getMessage());
         }
     }
 }
