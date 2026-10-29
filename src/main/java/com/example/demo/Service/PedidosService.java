@@ -48,7 +48,7 @@ public class PedidosService {
         this.detalleRepository = detalleRepository;
     }
 
-    // Largo máximo de COTIZACIONES.DIRECCION_ENTREGA (ajústalo al tamaño real de la columna)
+    // Largo máximo de COTIZACIONES.DIRECCION_ENTREGA
     private static final int LARGO_MAX_DIRECCION = 255;
 
     // Un producto del carrito ya validado, con el precio de la base de datos
@@ -58,7 +58,7 @@ public class PedidosService {
     public record PedidoCalculado(Cliente cliente, Envio envio, BigDecimal total,
                                   List<LineaPedido> lineas, String direccionEntrega) {}
 
-    // Todos los pedidos (para el panel de administración)
+    // Todos los pedidos
     public List<PedidosRequest> obtenerTodosLosPedidos() {
         return pedidosRepository.findAll().stream()
             .map(this::aDto)
@@ -83,7 +83,7 @@ public class PedidosService {
 
         List<DetalleCotizacion> detalles = detalleRepository.findByCotizacion_IdCotizacionOrderByIdAsc(pedidoId);
 
-        // Nombres de los productos (la tabla de detalle solo guarda el ID_PRODUCTO)
+        // Nombres de los productos
         List<Long> ids = detalles.stream().map(DetalleCotizacion::getProductoId)
             .filter(Objects::nonNull).distinct().collect(Collectors.toList());
         Map<Long, String> nombres = productoRepository.findAllById(ids).stream()
