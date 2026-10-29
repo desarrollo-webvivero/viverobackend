@@ -34,6 +34,10 @@ public class Cotizacion {
     @Column(name = "METODO_PAGO", nullable = false)
     private String metodoPago;
 
+    // Dirección exacta que escribió el cliente (columna nueva)
+    @Column(name = "DIRECCION_ENTREGA")
+    private String direccionEntrega;
+
     @PrePersist
     protected void prePersist() {
 
@@ -71,4 +75,7 @@ public class Cotizacion {
 
     public String getMetodoPago() { return metodoPago; }
     public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
+
+    public String getDireccionEntrega() { return direccionEntrega; }
+    public void setDireccionEntrega(String direccionEntrega) { this.direccionEntrega = direccionEntrega; }
 }
