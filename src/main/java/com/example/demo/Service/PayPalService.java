@@ -38,6 +38,11 @@ public class PayPalService {
         return !clientId.isBlank() && !clientSecret.isBlank();
     }
 
+
+    public String getClientId() {
+        return clientId;
+    }
+
     public BigDecimal getTasaCambio() {
         return tasaCambio;
     }
