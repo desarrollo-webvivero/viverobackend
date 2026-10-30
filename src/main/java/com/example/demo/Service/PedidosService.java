@@ -48,13 +48,13 @@ public class PedidosService {
         this.detalleRepository = detalleRepository;
     }
 
-    // Largo máximo de COTIZACIONES.DIRECCION_ENTREGA
+    
     private static final int LARGO_MAX_DIRECCION = 255;
 
-    // Un producto del carrito ya validado, con el precio de la base de datos
+    
     public record LineaPedido(Long productoId, String nombre, Integer cantidad, BigDecimal precioUnitario) {}
 
-    // Datos ya validados de un pedido, listos para guardarse
+
     public record PedidoCalculado(Cliente cliente, Envio envio, BigDecimal total,
                                   List<LineaPedido> lineas, String direccionEntrega) {}
 
@@ -65,15 +65,13 @@ public class PedidosService {
             .collect(Collectors.toList());
     }
 
-    // Solo los pedidos del cliente indicado (para la página "Mi cuenta")
+  
     public List<PedidosRequest> obtenerPedidosPorCliente(Long clienteId) {
         return pedidosRepository.findByCliente_IdOrderByFechaSolicitudDesc(clienteId).stream()
             .map(this::aDto)
             .collect(Collectors.toList());
     }
 
-    // Detalle completo de un pedido: productos, dirección, envío y totales.
-    // Si se manda clienteId, solo lo devuelve si el pedido es de ese cliente.
     @Transactional(readOnly = true)
     public PedidoDetalleResponse obtenerDetalle(Long pedidoId, Long clienteId) {
         Cotizacion pedido = pedidosRepository.findById(pedidoId)
@@ -83,7 +81,7 @@ public class PedidosService {
 
         List<DetalleCotizacion> detalles = detalleRepository.findByCotizacion_IdCotizacionOrderByIdAsc(pedidoId);
 
-        // Nombres de los productos
+      
         List<Long> ids = detalles.stream().map(DetalleCotizacion::getProductoId)
             .filter(Objects::nonNull).distinct().collect(Collectors.toList());
         Map<Long, String> nombres = productoRepository.findAllById(ids).stream()
@@ -103,8 +101,7 @@ public class PedidosService {
         BigDecimal total = pedido.getTotalEstimado() != null ? pedido.getTotalEstimado() : BigDecimal.ZERO;
         Envio envio = pedido.getEnvio();
 
-        // Si tenemos los productos, el envío es lo que falta para llegar al total.
-        // En pedidos antiguos (sin productos guardados) usamos el costo actual de la zona.
+        
         BigDecimal subtotal;
         BigDecimal costoEnvio;
         if (!productos.isEmpty()) {
@@ -139,8 +136,7 @@ public class PedidosService {
         return r;
     }
 
-    // Valida el pedido y calcula el total (productos + envío) con los precios de la base de datos.
-    // No guarda nada.
+    
     @Transactional(readOnly = true)
     public PedidoCalculado calcularPedido(CrearCotizacionRequest req) {
         if (req.getClienteId() == null) {
@@ -186,7 +182,6 @@ public class PedidosService {
         return new PedidoCalculado(cliente, envio, total, lineas, direccion);
     }
 
-    // Guarda el pedido (COTIZACIONES) y sus productos (DETALLE_COTIZACIONES) con estado PENDIENTE
     @Transactional
     public PedidosRequest guardarPedido(PedidoCalculado calculado, String metodoPago) {
         Cotizacion pedido = new Cotizacion();
@@ -210,13 +205,12 @@ public class PedidosService {
         return aDto(guardado);
     }
 
-    // Pedido "contra entrega": calcular y guardar en un solo paso
+    
     @Transactional
     public PedidosRequest crearPedido(CrearCotizacionRequest req) {
         return guardarPedido(calcularPedido(req), req.getMetodoPago());
     }
 
-    // Devuelve el DTO (no la entidad): así no se envían datos del cliente como su contraseña cifrada
     @Transactional
     public PedidosRequest actualizarEstadoPedido(Long id, EstadoPedido nuevoEstado) {
         Cotizacion pedido = pedidosRepository.findById(id)
@@ -226,8 +220,8 @@ public class PedidosService {
         return aDto(pedidosRepository.save(pedido));
     }
 
-    // Busca la zona de envío: por id, o por departamento + municipio.
-    // Si el municipio escrito no coincide con ninguno, usa la primera zona de ese departamento.
+
+    
     private Envio buscarEnvio(CrearCotizacionRequest req) {
         if (req.getEnvioId() != null) {
             return envioRepository.findById(req.getEnvioId())
@@ -254,14 +248,14 @@ public class PedidosService {
             .orElse(delDepartamento.get(0));
     }
 
-    // "Sacatepéquez " -> "sacatepequez" (sin tildes, sin mayúsculas, sin espacios extra)
+    
     private static String normalizar(String texto) {
         if (texto == null) return "";
         return Normalizer.normalize(texto.trim().toLowerCase(), Normalizer.Form.NFD)
             .replaceAll("\\p{M}", "");
     }
 
-    // Convierte una Cotizacion de la base de datos al formato que recibe el frontend
+    
     private PedidosRequest aDto(Cotizacion pedido) {
         return new PedidosRequest(
             pedido.getIdCotizacion(),
