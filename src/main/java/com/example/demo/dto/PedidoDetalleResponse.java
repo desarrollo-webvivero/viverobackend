@@ -20,6 +20,10 @@ public class PedidoDetalleResponse {
     private String zonaReferencia;
     private String direccionEntrega;
     private List<Producto> productos;
+    // Datos del cliente (los usa el panel de administración para coordinar la entrega)
+    private String clienteNombre;
+    private String clienteTelefono;
+    private String clienteCorreo;
 
     public PedidoDetalleResponse() {}
 
@@ -58,4 +62,13 @@ public class PedidoDetalleResponse {
 
     public List<Producto> getProductos() { return productos; }
     public void setProductos(List<Producto> productos) { this.productos = productos; }
+
+    public String getClienteNombre() { return clienteNombre; }
+    public void setClienteNombre(String clienteNombre) { this.clienteNombre = clienteNombre; }
+
+    public String getClienteTelefono() { return clienteTelefono; }
+    public void setClienteTelefono(String clienteTelefono) { this.clienteTelefono = clienteTelefono; }
+
+    public String getClienteCorreo() { return clienteCorreo; }
+    public void setClienteCorreo(String clienteCorreo) { this.clienteCorreo = clienteCorreo; }
 }
