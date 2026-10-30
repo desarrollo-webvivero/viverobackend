@@ -28,11 +28,12 @@ public class PayPalController {
         this.pedidosService = pedidosService;
     }
 
-    // Para que el frontend muestre el equivalente en dólares
+  
     @GetMapping("/config")
     public Map<String, Object> config() {
         return Map.of(
             "configurado", payPalService.estaConfigurado(),
+            "clientId", payPalService.getClientId(),
             "tasaCambio", payPalService.getTasaCambio(),
             "moneda", "USD"
         );
