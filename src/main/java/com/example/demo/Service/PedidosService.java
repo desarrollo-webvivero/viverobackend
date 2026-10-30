@@ -131,6 +131,11 @@ public class PedidosService {
         }
         r.setDireccionEntrega(pedido.getDireccionEntrega());
         r.setProductos(productos);
+        if (pedido.getCliente() != null) {
+            r.setClienteNombre(pedido.getCliente().getNombreCompleto());
+            r.setClienteTelefono(pedido.getCliente().getTelefono());
+            r.setClienteCorreo(pedido.getCliente().getCorreoElectronico());
+        }
         return r;
     }
 
